@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdio>
 #include "md5.h"
 
 using namespace std;
@@ -22,9 +23,8 @@ static unsigned int k[] = {
 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391};
 
-void md5(char * sm, size_t l, char * output) {
+void md5(char * sm, size_t l, uint32_t * h) {
 	unsigned char * m = reinterpret_cast<unsigned char *>(sm);
-	uint32_t * h = reinterpret_cast<uint32_t *>(output);
 	size_t padded = (l+9+63)/64*64;
 	h[0] = 0x67452301;
 	h[1] = 0xefcdab89;
@@ -73,4 +73,29 @@ void md5chunk(unsigned char * bb, uint32_t * h) {
 	h[1] += b;
 	h[2] += c;
 	h[3] += d;
+}
+
+std::string hash_hex(uint32_t * h) {
+	uint32_t swap[4];
+	char * a = reinterpret_cast<char *>(h);
+	char * b = reinterpret_cast<char *>(swap);
+	b[0] = a[3];
+	b[1] = a[2];
+	b[2] = a[1];
+	b[3] = a[0];
+	b[4] = a[7];
+	b[5] = a[6];
+	b[6] = a[5];
+	b[7] = a[4];
+	b[8] = a[11];
+	b[9] = a[10];
+	b[10] = a[9];
+	b[11] = a[8];
+	b[12] = a[15];
+	b[13] = a[14];
+	b[14] = a[13];
+	b[15] = a[12];
+	char c[33];
+	sprintf(c, "%08x%08x%08x%08x", swap[0], swap[1], swap[2], swap[3]);
+	return c;
 }

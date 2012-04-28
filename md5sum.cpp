@@ -7,17 +7,14 @@
 
 using namespace std;
 
-void md5(char * sm, size_t l, char * output);
-
 int main() {
 	string line;
-	char output[16];
+	uint32_t h[4];
 	while (getline(cin, line)) {
 		char * c = strdup(line.c_str());
-		printf("%s\n", c);
-		md5(c, line.size(), output);
+		md5(c, line.size(), h);
 		free(c);
-		fwrite(output, 1, 16, stdout);
+		cout << hash_hex(h) << endl;
 	}
 	return 0;
 }

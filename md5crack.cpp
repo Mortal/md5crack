@@ -32,26 +32,8 @@ inline int parsehex(char c) {
 }
 
 void printhash(uint32_t * h) {
-	uint32_t swap[4];
-	char * a = reinterpret_cast<char *>(h);
-	char * b = reinterpret_cast<char *>(swap);
-	b[0] = a[3];
-	b[1] = a[2];
-	b[2] = a[1];
-	b[3] = a[0];
-	b[4] = a[7];
-	b[5] = a[6];
-	b[6] = a[5];
-	b[7] = a[4];
-	b[8] = a[11];
-	b[9] = a[10];
-	b[10] = a[9];
-	b[11] = a[8];
-	b[12] = a[15];
-	b[13] = a[14];
-	b[14] = a[13];
-	b[15] = a[12];
-	printf("%08x%08x%08x%08x\n", swap[0], swap[1], swap[2], swap[3]);
+	string hex = hash_hex(h);
+	printf("%s\n", hex.c_str());
 }
 
 void parse_target(char * arg, uint32_t * target) {
