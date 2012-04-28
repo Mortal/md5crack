@@ -1,3 +1,5 @@
+CXXFLAGS=-Wall -Wextra -O3
+
 all: md5crack md5sum
 
 md5crack: md5crack.o md5.o
