@@ -21,6 +21,8 @@ static unsigned int k[] = {
 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391};
 
+void md5chunk(unsigned char * buf, uint32_t * h);
+
 void md5(char * sm, size_t l, char * output) {
 	unsigned char * m = reinterpret_cast<unsigned char *>(sm);
 	uint32_t * h = reinterpret_cast<uint32_t *>(output);
@@ -36,36 +38,40 @@ void md5(char * sm, size_t l, char * output) {
 	uint64_t * p = reinterpret_cast<uint64_t *>(buf+padded-8);
 	*p = l*8;
 	for (unsigned char * bb = buf; bb < buf+padded; bb += 64) {
-		uint32_t * w = reinterpret_cast<uint32_t *>(bb);
-		unsigned int a = h[0];
-		unsigned int b = h[1];
-		unsigned int c = h[2];
-		unsigned int d = h[3];
-		unsigned int f, g;
-		for (unsigned int i = 0; i < 64; ++i) {
-			if (i < 16) {
-				f = (b & c) | ((~b) & d);
-				g = i;
-			} else if (i < 32) {
-				f = (d & b) | ((~d) & c);
-				g = (5*i + 1) % 16;
-			} else if (i < 48) {
-				f = b ^ c ^ d;
-				g = (3*i + 5) % 16;
-			} else {
-				f = c ^ (b | (~d));
-				g = (7*i) % 16;
-			}
-			const unsigned int temp = d;
-			d = c;
-			c = b;
-			const unsigned int v = a + f + k[i] + w[g];
-			b = b + ((v << r[i]) | (v >> (32-r[i])));
-			a = temp;
-		}
-		h[0] += a;
-		h[1] += b;
-		h[2] += c;
-		h[3] += d;
+		md5chunk(bb, h);
 	}
+}
+
+void md5chunk(unsigned char * bb, uint32_t * h) {
+	uint32_t * w = reinterpret_cast<uint32_t *>(bb);
+	unsigned int a = h[0];
+	unsigned int b = h[1];
+	unsigned int c = h[2];
+	unsigned int d = h[3];
+	unsigned int f, g;
+	for (unsigned int i = 0; i < 64; ++i) {
+		if (i < 16) {
+			f = (b & c) | ((~b) & d);
+			g = i;
+		} else if (i < 32) {
+			f = (d & b) | ((~d) & c);
+			g = (5*i + 1) % 16;
+		} else if (i < 48) {
+			f = b ^ c ^ d;
+			g = (3*i + 5) % 16;
+		} else {
+			f = c ^ (b | (~d));
+			g = (7*i) % 16;
+		}
+		const unsigned int temp = d;
+		d = c;
+		c = b;
+		const unsigned int v = a + f + k[i] + w[g];
+		b = b + ((v << r[i]) | (v >> (32-r[i])));
+		a = temp;
+	}
+	h[0] += a;
+	h[1] += b;
+	h[2] += c;
+	h[3] += d;
 }
