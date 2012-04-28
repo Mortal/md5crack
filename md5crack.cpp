@@ -1,10 +1,10 @@
 #include <iostream>
-#include <stdint.h>
 #include <string>
 #include <cstring>
 #include <cstdio>
 #include <err.h>
 #include <cstdlib>
+#include "md5.h"
 
 using namespace std;
 

@@ -1,5 +1,6 @@
 #include <algorithm>
-#include <stdint.h>
+#include "md5.h"
+
 using namespace std;
 
 static int r[] = {7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 5,  9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21};
@@ -20,8 +21,6 @@ static unsigned int k[] = {
 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391};
-
-void md5chunk(unsigned char * buf, uint32_t * h);
 
 void md5(char * sm, size_t l, char * output) {
 	unsigned char * m = reinterpret_cast<unsigned char *>(sm);
