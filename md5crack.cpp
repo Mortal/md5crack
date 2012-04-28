@@ -47,7 +47,6 @@ void parse_target(char * arg, uint32_t * target) {
 	for (int i = 0; i < 16; ++i) {
 		t[i] = 16*parsehex(arg[2*i])+parsehex(arg[2*i+1]);
 	}
-	printhash(target);
 }
 
 int main(int argc, char ** argv) {
