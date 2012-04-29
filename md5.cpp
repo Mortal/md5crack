@@ -12,27 +12,19 @@ void md5(char * sm, size_t l, uint32_t * h) {
 	copy(c.result(), c.result()+4, h);
 }
 
+inline static uint32_t swapendian(uint32_t i) {
+	return (i << 24)
+		| ((i & 0xFF00) << 8)
+		| ((i & 0xFF0000) >> 8)
+		| (i >> 24);
+}
 
 std::string hash_hex(const uint32_t * h) {
 	uint32_t swap[4];
-	const char * a = reinterpret_cast<const char *>(h);
-	char * b = reinterpret_cast<char *>(swap);
-	b[0] = a[3];
-	b[1] = a[2];
-	b[2] = a[1];
-	b[3] = a[0];
-	b[4] = a[7];
-	b[5] = a[6];
-	b[6] = a[5];
-	b[7] = a[4];
-	b[8] = a[11];
-	b[9] = a[10];
-	b[10] = a[9];
-	b[11] = a[8];
-	b[12] = a[15];
-	b[13] = a[14];
-	b[14] = a[13];
-	b[15] = a[12];
+	swap[0] = swapendian(h[0]);
+	swap[1] = swapendian(h[1]);
+	swap[2] = swapendian(h[2]);
+	swap[3] = swapendian(h[3]);
 	char c[33];
 	sprintf(c, "%08x%08x%08x%08x", swap[0], swap[1], swap[2], swap[3]);
 	return c;
