@@ -8,13 +8,15 @@
 using namespace std;
 
 int main() {
+	string prev;
 	string line;
-	uint32_t h[4];
+	md5string s(line);
 	while (getline(cin, line)) {
-		char * c = strdup(line.c_str());
-		md5(c, line.size(), h);
-		free(c);
-		cout << hash_hex(h) << endl;
+		size_t i = 0;
+		while (i < line.size() && i < prev.size() && line[i] == prev[i]) i++;
+		s.set_suffix(line.c_str()+i, i, line.size()-i);
+		cout << hash_hex(s.md5().result()) << endl;
+		prev = line;
 	}
 	return 0;
 }

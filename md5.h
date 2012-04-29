@@ -6,6 +6,13 @@
 #include <string>
 #include <stdint.h>
 
+#ifndef NDEBUG
+#include <iostream>
+#define DEBUG(msg) do { std::cout << "[DEBUG] " << msg << std::endl; } while (0)
+#else
+#define DEBUG(msg) do { } while (0)
+#endif
+
 void md5(char * sm, size_t l, uint32_t * h);
 void md5chunk(unsigned char * buf, uint32_t * h);
 std::string hash_hex(const uint32_t * h);
@@ -28,64 +35,6 @@ static unsigned int k[] = {
 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391};
-
-struct md5string {
-	inline md5string(const char * m) {
-		set_message(m, strlen(m));
-	}
-	inline md5string(const std::string & m) {
-		set_message(m.c_str(), m.size());
-	}
-	inline md5string(const char * m, size_t l) {
-		set_message(m, l);
-	}
-	inline void set_message(const char * src, size_t length) {
-		messageLength = length;
-		chunkCount = calculate_chunk_count(length);
-		calculate_message_capacity();
-		data.resize(chunkCount*CHUNKSZ);
-		std::copy(src, src+length, data.begin());
-		update_trailer();
-	}
-	inline void set_suffix(const char * src, size_t offset, size_t length) {
-		if (offset+length <= messageCapacity) {
-			std::copy(src, src+length, data.begin()+offset);
-			messageLength = offset+length;
-		} else {
-			size_t newChunkCount = calculate_chunk_count(offset+length);
-			std::vector<char> newData(newChunkCount*CHUNKSZ);
-			std::copy(data.begin(), data.begin()+offset, newData.begin());
-			std::copy(src, src+length, newData.begin()+offset);
-			data.swap(newData);
-			chunkCount = newChunkCount;
-			calculate_message_capacity();
-		}
-	}
-
-	inline static size_t calculate_chunk_count(size_t messageLength) {
-		return (messageLength+TRAILERSZ+CHUNKSZ-1)/CHUNKSZ;
-	}
-
-	inline void calculate_message_capacity() {
-		messageCapacity = chunkCount*CHUNKSZ-TRAILERSZ;
-	}
-
-	std::vector<char> data;
-
-private:
-	size_t messageLength;
-	size_t chunkCount;
-	size_t messageCapacity;
-	static const size_t TRAILERSZ = 9;
-	static const size_t CHUNKSZ = 64;
-
-	inline void update_trailer() {
-		fill(data.begin()+messageLength, data.end(), 0);
-		data[messageLength] = 0x80;
-		uint64_t * p = reinterpret_cast<uint64_t *>(&(*(data.end()-8)));
-		*p = messageLength*8;
-	}
-};
 
 struct md5calculation {
 	inline md5calculation() {
@@ -134,6 +83,99 @@ struct md5calculation {
 
 private:
 	uint32_t h[4];
+};
+
+struct md5string {
+	inline md5string(const char * m) {
+		set_message(m, strlen(m));
+	}
+	inline md5string(const std::string & m) {
+		set_message(m.c_str(), m.size());
+	}
+	inline md5string(const char * m, size_t l) {
+		set_message(m, l);
+	}
+	inline void set_message(const char * src, size_t length) {
+		messageLength = length;
+		chunkCount = calculate_chunk_count(length);
+		calculate_message_capacity();
+		data.resize(chunkCount*CHUNKSZ);
+		std::copy(src, src+length, data.begin());
+		update_trailer();
+		cachedCalculations = 0;
+		calculations.resize(chunkCount);
+	}
+	inline void set_suffix(const char * src, size_t offset, size_t length) {
+		if (offset == messageLength && length == 0) {
+			DEBUG("Empty change");
+			return;
+		}
+		if (offset+length <= messageCapacity) {
+			std::copy(src, src+length, data.begin()+offset);
+			messageLength = offset+length;
+			cachedCalculations = std::min(cachedCalculations, offset/CHUNKSZ);
+			update_trailer();
+			DEBUG("Replace " << length << " bytes at " << offset << " into buffer, msg len = " << messageLength << ", cached = " << cachedCalculations);
+		} else {
+			DEBUG("Reallocate buffer");
+			size_t newChunkCount = calculate_chunk_count(offset+length);
+			std::vector<char> newData(newChunkCount*CHUNKSZ);
+			std::copy(data.begin(), data.begin()+offset, newData.begin());
+			std::copy(src, src+length, newData.begin()+offset);
+			data.swap(newData);
+			chunkCount = newChunkCount;
+			calculate_message_capacity();
+			cachedCalculations = 0;
+			calculations.resize(chunkCount);
+			messageLength = offset+length;
+			update_trailer();
+		}
+	}
+
+	inline static size_t calculate_chunk_count(size_t messageLength) {
+		return (messageLength+TRAILERSZ+CHUNKSZ-1)/CHUNKSZ;
+	}
+
+	inline void calculate_message_capacity() {
+		messageCapacity = chunkCount*CHUNKSZ-TRAILERSZ;
+	}
+
+	std::vector<char> data;
+
+	md5calculation md5() {
+		DEBUG("calc " << chunkCount << " chunks");
+		md5calculation & worker = calculations[chunkCount-1];
+		if (cachedCalculations >= chunkCount) {
+			DEBUG("Reuse cached calculation");
+			return worker;
+		}
+		worker = cachedCalculations ? calculations[cachedCalculations-1] : md5calculation();
+		size_t offset = cachedCalculations*CHUNKSZ;
+		DEBUG(cachedCalculations << " cached calculations");
+		for (size_t i = cachedCalculations; i < chunkCount; ++i) {
+			worker.chunk(data.begin()+offset);
+			if (i < chunkCount - 1) calculations[i] = worker;
+			offset += CHUNKSZ;
+		}
+		cachedCalculations = chunkCount;
+		return worker;
+	}
+
+private:
+	size_t messageLength;
+	size_t chunkCount;
+	size_t messageCapacity;
+	static const size_t TRAILERSZ = 9;
+	static const size_t CHUNKSZ = 64;
+	size_t cachedCalculations;
+	std::vector<md5calculation> calculations;
+
+	inline void update_trailer() {
+		fill(data.begin()+messageLength, data.end(), 0);
+		data[messageLength] = 0x80;
+		uint64_t * p = reinterpret_cast<uint64_t *>(&(*(data.end()-8)));
+		*p = messageLength*8;
+	}
 };
 
 #endif // MD5_H

@@ -1,4 +1,4 @@
-CXXFLAGS=-Wall -Wextra -O3
+CXXFLAGS=-Wall -Wextra -O3 -DNDEBUG
 
 all: md5crack md5sum
 

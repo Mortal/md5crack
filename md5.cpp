@@ -7,18 +7,8 @@
 using namespace std;
 
 void md5(char * sm, size_t l, uint32_t * h) {
-	unsigned char * m = reinterpret_cast<unsigned char *>(sm);
-	size_t padded = (l+9+63)/64*64;
-	unsigned char * buf = new unsigned char[padded];
-	copy(m, m+l, buf);
-	buf[l] = 0x80;
-	fill(buf+l+1, buf+padded-8, 0);
-	uint64_t * p = reinterpret_cast<uint64_t *>(buf+padded-8);
-	*p = l*8;
-	md5calculation c;
-	for (unsigned char * bb = buf; bb < buf+padded; bb += 64) {
-		c.chunk(bb);
-	}
+	md5string s(sm, l);
+	md5calculation c = s.md5();
 	copy(c.result(), c.result()+4, h);
 }
 
