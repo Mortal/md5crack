@@ -112,9 +112,8 @@ struct md5string {
 		}
 		if (offset+length <= messageCapacity) {
 			std::copy(src, src+length, data.begin()+offset);
-			messageLength = offset+length;
-			cachedCalculations = std::min(cachedCalculations, offset/CHUNKSZ);
-			update_trailer();
+			invalidate_suffix(offset, offset+length);
+
 			DEBUG("Replace " << length << " bytes at " << offset << " into buffer, msg len = " << messageLength << ", cached = " << cachedCalculations);
 		} else {
 			DEBUG("Reallocate buffer");
@@ -125,9 +124,15 @@ struct md5string {
 			data.swap(newData);
 			chunkCount = newChunkCount;
 			calculate_message_capacity();
-			cachedCalculations = 0;
 			calculations.resize(chunkCount);
-			messageLength = offset+length;
+			invalidate_suffix(0, offset+length);
+		}
+	}
+
+	inline void invalidate_suffix(size_t offset, size_t newLength) {
+		cachedCalculations = std::min(cachedCalculations, offset/CHUNKSZ);
+		if (newLength != messageLength) {
+			messageLength = newLength;
 			update_trailer();
 		}
 	}
