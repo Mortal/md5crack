@@ -8,8 +8,6 @@
 
 using namespace std;
 
-void md5chunk(unsigned char * buf, uint32_t * h);
-
 template <uint64_t D>
 inline static void inc(unsigned char * buf);
 
@@ -31,7 +29,7 @@ inline int parsehex(char c) {
 	return 10+c-'a';
 }
 
-void printhash(uint32_t * h) {
+void printhash(const uint32_t * h) {
 	string hex = hash_hex(h);
 	printf("%s\n", hex.c_str());
 }
@@ -64,12 +62,9 @@ int main(int argc, char ** argv) {
 	uint64_t * n = reinterpret_cast<uint64_t *>(buf+56);
 	*n = digits*8;
 	while (true) {
-		uint32_t h[4];
-		h[0] = 0x67452301;
-		h[1] = 0xefcdab89;
-		h[2] = 0x98badcfe;
-		h[3] = 0x10325476;
-		md5chunk(buf, h);
+		md5calculation c;
+		c.chunk(buf);
+		const uint32_t * h = c.result();
 		const bool found =
 			(h[0] == target[0] &&
 			 h[1] == target[1] &&
@@ -96,3 +91,4 @@ int main(int argc, char ** argv) {
 	}
 	return 0;
 }
+// vim:set ts=4 sw=4 sts=4 noet:
