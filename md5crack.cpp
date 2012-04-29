@@ -29,11 +29,6 @@ inline int parsehex(char c) {
 	return 10+c-'a';
 }
 
-void printhash(const uint32_t * h) {
-	string hex = hash_hex(h);
-	printf("%s\n", hex.c_str());
-}
-
 void parse_target(char * arg, uint32_t * target) {
 	int i = 0;
 	while (arg[i]) {
@@ -56,7 +51,8 @@ int main(int argc, char ** argv) {
 	msg[0] = '1';
 	md5string s(msg);
 	while (true) {
-		const uint32_t * h = s.md5().result();
+		md5calculation m = s.md5();
+		const uint32_t * h = m.result();
 		const bool found =
 			(h[0] == target[0] &&
 			 h[1] == target[1] &&
@@ -76,7 +72,7 @@ int main(int argc, char ** argv) {
 				printf(" <-- match found for ");
 			else
 				printf(" ");
-			printhash(h);
+			printf("%s\n", hash_hex(h).c_str());
 			fflush(stdout);
 		}
 		inc<digits-1>(&*s.data.begin());
