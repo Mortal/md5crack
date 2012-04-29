@@ -9,15 +9,15 @@
 using namespace std;
 
 template <uint64_t D>
-inline static void inc(unsigned char * buf);
+inline static void inc(char * buf);
 
 template <>
-void inc<0>(unsigned char * buf) {
+void inc<0>(char * buf) {
 	++buf[0];
 }
 
 template <uint64_t D>
-void inc(unsigned char * buf) {
+void inc(char * buf) {
 	if (++buf[D] > '9') {
 		buf[D] = '0';
 		inc<D-1>(buf);
@@ -51,35 +51,27 @@ int main(int argc, char ** argv) {
 	if (argc < 2) errx(1, "Missing parameter. Usage: %s [hash]", argv[0]);
 	uint32_t target[4];
 	parse_target(argv[1], target);
-	unsigned char buf[64];
-	fill(buf+0, buf+64, 0);
 	const uint64_t digits = 9;
-	for (uint64_t i = 0; i < digits; ++i) {
-		buf[i] = '0';
-	}
-	buf[0] = '1';
-	buf[digits] = 0x80;
-	uint64_t * n = reinterpret_cast<uint64_t *>(buf+56);
-	*n = digits*8;
+	string msg(digits, '0');
+	msg[0] = '1';
+	md5string s(msg);
 	while (true) {
-		md5calculation c;
-		c.chunk(buf);
-		const uint32_t * h = c.result();
+		const uint32_t * h = s.md5().result();
 		const bool found =
 			(h[0] == target[0] &&
 			 h[1] == target[1] &&
 			 h[2] == target[2] &&
 			 h[3] == target[3]);
 		const bool progress =
-			(buf[digits-7] == '0' &&
-			 buf[digits-6] == '0' &&
-			 buf[digits-5] == '0' &&
-			 buf[digits-4] == '0' &&
-			 buf[digits-3] == '0' &&
-			 buf[digits-2] == '0' &&
-			 buf[digits-1] == '0');
+			(s.data[digits-7] == '0' &&
+			 s.data[digits-6] == '0' &&
+			 s.data[digits-5] == '0' &&
+			 s.data[digits-4] == '0' &&
+			 s.data[digits-3] == '0' &&
+			 s.data[digits-2] == '0' &&
+			 s.data[digits-1] == '0');
 		if (found || progress) {
-			fwrite(buf, 1, 9, stdout);
+			fwrite(&*s.data.begin(), 1, 9, stdout);
 			if (found)
 				printf(" <-- match found for ");
 			else
@@ -87,7 +79,8 @@ int main(int argc, char ** argv) {
 			printhash(h);
 			fflush(stdout);
 		}
-		inc<digits-1>(buf);
+		inc<digits-1>(&*s.data.begin());
+		s.invalidate_suffix(0, digits);
 	}
 	return 0;
 }
