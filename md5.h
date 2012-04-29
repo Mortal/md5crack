@@ -70,6 +70,9 @@ struct md5calculation {
 		h[3] += aa[3];
 	}
 
+	inline const uint32_t * result() { return h; }
+
+private:
 	template <int i>
 	inline void chunkpart(uint32_t * w, unsigned int * aa) {
 		chunkpart2<i/16, i%4>(w, aa, i);
@@ -104,9 +107,6 @@ struct md5calculation {
 		a = b + ((v << r[i]) | (v >> (32-r[i])));
 	}
 
-	inline const uint32_t * result() { return h; }
-
-private:
 	uint32_t h[4];
 };
 
