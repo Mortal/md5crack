@@ -47,36 +47,61 @@ struct md5calculation {
 	template <typename IT>
 	inline void chunk(IT from) {
 		uint32_t * w = reinterpret_cast<uint32_t *>(&*from);
-		unsigned int a = h[0];
-		unsigned int b = h[1];
-		unsigned int c = h[2];
-		unsigned int d = h[3];
+		unsigned int aa[] = {h[0], h[1], h[2], h[3]};
+		chunkpart<0>(w,aa);  chunkpart<1>(w,aa);  chunkpart<2>(w,aa);  chunkpart<3>(w,aa);
+		chunkpart<4>(w,aa);  chunkpart<5>(w,aa);  chunkpart<6>(w,aa);  chunkpart<7>(w,aa);
+		chunkpart<8>(w,aa);  chunkpart<9>(w,aa);  chunkpart<10>(w,aa); chunkpart<11>(w,aa);
+		chunkpart<12>(w,aa); chunkpart<13>(w,aa); chunkpart<14>(w,aa); chunkpart<15>(w,aa);
+		chunkpart<16>(w,aa); chunkpart<17>(w,aa); chunkpart<18>(w,aa); chunkpart<19>(w,aa);
+		chunkpart<20>(w,aa); chunkpart<21>(w,aa); chunkpart<22>(w,aa); chunkpart<23>(w,aa);
+		chunkpart<24>(w,aa); chunkpart<25>(w,aa); chunkpart<26>(w,aa); chunkpart<27>(w,aa);
+		chunkpart<28>(w,aa); chunkpart<29>(w,aa); chunkpart<30>(w,aa); chunkpart<31>(w,aa);
+		chunkpart<32>(w,aa); chunkpart<33>(w,aa); chunkpart<34>(w,aa); chunkpart<35>(w,aa);
+		chunkpart<36>(w,aa); chunkpart<37>(w,aa); chunkpart<38>(w,aa); chunkpart<39>(w,aa);
+		chunkpart<40>(w,aa); chunkpart<41>(w,aa); chunkpart<42>(w,aa); chunkpart<43>(w,aa);
+		chunkpart<44>(w,aa); chunkpart<45>(w,aa); chunkpart<46>(w,aa); chunkpart<47>(w,aa);
+		chunkpart<48>(w,aa); chunkpart<49>(w,aa); chunkpart<50>(w,aa); chunkpart<51>(w,aa);
+		chunkpart<52>(w,aa); chunkpart<53>(w,aa); chunkpart<54>(w,aa); chunkpart<55>(w,aa);
+		chunkpart<56>(w,aa); chunkpart<57>(w,aa); chunkpart<58>(w,aa); chunkpart<59>(w,aa);
+		chunkpart<60>(w,aa); chunkpart<61>(w,aa); chunkpart<62>(w,aa); chunkpart<63>(w,aa);
+		h[0] += aa[0];
+		h[1] += aa[1];
+		h[2] += aa[2];
+		h[3] += aa[3];
+	}
+
+	template <int i>
+	inline void chunkpart(uint32_t * w, unsigned int * aa) {
+		chunkpart2<i/16, i%4>(w, aa, i);
+	}
+
+	template <int phase, int shift>
+	inline void chunkpart2(uint32_t * w, unsigned int * aa, int i) {
+		unsigned int & a = aa[(4-shift)%4];
+		unsigned int & b = aa[(5-shift)%4];
+		unsigned int & c = aa[(6-shift)%4];
+		unsigned int & d = aa[(7-shift)%4];
 		unsigned int f, g;
-		for (unsigned int i = 0; i < 64; ++i) {
-			if (i < 16) {
-				f = (b & c) | ((~b) & d);
-				g = i;
-			} else if (i < 32) {
-				f = (d & b) | ((~d) & c);
-				g = (5*i + 1) % 16;
-			} else if (i < 48) {
-				f = b ^ c ^ d;
-				g = (3*i + 5) % 16;
-			} else {
-				f = c ^ (b | (~d));
-				g = (7*i) % 16;
-			}
-			const unsigned int temp = d;
-			d = c;
-			c = b;
-			const unsigned int v = a + f + k[i] + w[g];
-			b = b + ((v << r[i]) | (v >> (32-r[i])));
-			a = temp;
+		switch (phase) {
+		case 0:
+			f = (b & c) | ((~b) & d);
+			g = i;
+			break;
+		case 1:
+			f = (d & b) | ((~d) & c);
+			g = (5*i + 1) % 16;
+			break;
+		case 2:
+			f = b ^ c ^ d;
+			g = (3*i + 5) % 16;
+			break;
+		case 3:
+			f = c ^ (b | (~d));
+			g = (7*i) % 16;
+			break;
 		}
-		h[0] += a;
-		h[1] += b;
-		h[2] += c;
-		h[3] += d;
+		const unsigned int v = a + f + k[i] + w[g];
+		a = b + ((v << r[i]) | (v >> (32-r[i])));
 	}
 
 	inline const uint32_t * result() { return h; }
